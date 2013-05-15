@@ -1,14 +1,13 @@
 #include <stdio.h>
 
-#define FILE_LEN 50
+#include "pinControl.h"
+
 #define MIN_INC 16
 #define DEF_INC 64
 #define MAX_INC 1024
 
 int main(int argc, char *argv[]) {
-   char direction[FILE_LEN], value[FILE_LEN];
    int skip, port, i, count;
-   FILE *fp;
 
    if (argc < 2) {
       printf("Incorrect usage: %s GPIO_num (timing increment)\n", argv[0]);
@@ -23,28 +22,18 @@ int main(int argc, char *argv[]) {
       skip = MIN_INC;
    port = atoi(argv[1]);
 
-   sprintf(direction, "/sys/class/gpio/gpio%d/direction", port);
-   sprintf(value, "/sys/class/gpio/gpio%d/value", port);
+   init();
 
-   fp = fopen("/sys/class/gpio/export", "w");
-   fprintf(fp, "%d", port);
-   fclose(fp);
+   openGPIO(port, OUT);
 
-   fp = fopen(direction, "w");
-   fprintf(fp, "out", port);
-   fclose(fp);
-
-   fp = fopen(value, "w");
    for (i = 0; i < 100; i++) {
-      fprintf(fp, i%2 ? "0" : "1");
-      fflush(fp);
+      writeBinary(port, i%2);
       for (count = 0; count >= 0; count += skip) ;
    }
-   fclose(fp);
+   
+   closeGPIO(port);
 
-   fp = fopen("/sys/class/gpio/unexport", "w");
-   fprintf(fp, "%d", port);
-   fclose(fp);
+   cleanUp();
 
    return 0;
 }
