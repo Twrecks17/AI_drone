@@ -1,12 +1,9 @@
 #include <stdio.h>
 
-#define FILE_LEN 50
-#define MASK 15
+#include "pinControl.h"
 
 int main(int argc, char *argv[]) {
-   char direction[FILE_LEN], value[FILE_LEN];
-   int port, c;
-   FILE *fp;
+   int port;
 
    if (argc != 2) {
       printf("Incorrect usage: %s GPIO_num\n", argv[0]);
@@ -15,38 +12,39 @@ int main(int argc, char *argv[]) {
 
    port = atoi(argv[1]);
 
-   sprintf(direction, "/sys/class/gpio/gpio%d/direction", port);
-   sprintf(value, "/sys/class/gpio/gpio%d/value", port);
+   init();
 
-   fp = fopen("/sys/class/gpio/export", "w");
-   fprintf(fp, "%d", port);
-   fclose(fp);
+   openGPIO(port, IN);
 
-   fp = fopen(direction, "w");
-   fprintf(fp, "in", port);
-   fclose(fp);
-
-   printf("Value: ");
+   printf("Value: (Ctrl+D to end)");
    fflush(stdout);
-   fp = fopen(value, "r");
+
    while (1) {
       while (getchar() != '\n' && !feof(stdin)) ;
       
       if (feof(stdin))
-	 break;
+	       break;
       
-      fflush(fp);
-      fseek(fp, 0, SEEK_SET);
-      fscanf(fp, "%d", &c);
-      printf("      %d", c);
+      printf("      %d", readBinary(port));
       fflush(stdout);
    }
-   fclose(fp);
    printf("\n");
 
-   fp = fopen("/sys/class/gpio/unexport", "w");
-   fprintf(fp, "%d", port);
-   fclose(fp);
+   closeGPIO(port);
+
+   cleanUp();
+
+
+
+
+
+
+
+
+
+
+
+
 
    return 0;
 }
